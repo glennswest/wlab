@@ -1,0 +1,15 @@
+{
+  "name": "wlab",
+  "version": "1.0.0",
+  "description": "A Lab Manager for OpenShift Windows",
+  "main": "wlab.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ansible",
+    "openshift"
+  ],
+  "author": "Glenn West",
+  "license": "ISC"
+}

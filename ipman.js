@@ -1,9 +1,10 @@
 var db = require('diskdb');
-db = db.connect('./db',['ipman','setting','proj']);
+db = db.connect('./db',['ipman','setting','proj','vm']);
 var ip = require('ip');
 var util = require('util');
 var Moniker = require('moniker');
 var names = Moniker.generator([Moniker.noun]);
+var base_domain = "k.e2e.bos.redhat.com"
 
 //00:50:56:00:00:00-00:50:56:3F:FF:FF
 //00:50:56:1f:X:X
@@ -26,8 +27,8 @@ function create_ip_entry(theip)
     ipman.ip = theip;
     ipman.mac = mc;
     ipman.state = "unassigned";
-    ipman.name  = "";
-    ipman.domain = "";
+    ipman.fqdn = "";
+    ipman.project = "";
     console.log("New Entry: " + util.inspect(ipman));
     db.ipman.save(ipman);
 }
@@ -63,13 +64,61 @@ function create_project()
    db.proj.save(proj);
 }
 
+function allocate_ip(fqdn,project)
+{
+    ips = db.ipman.find({state : "unassigned"});
+    if (ips.length == 0){
+       console.log("IPMAN: No free ips");
+       exit(0);
+       }
+    ipman = ips[0];
+    ipman._id = ips[0]._id;
+    ipman.state = "assigned";
+    ipman.fqdn  = fqdn;
+    ipman.project = project;
+    result = db.ipman.update({ _id : ipman._id}, ipman);
+    console.log("Result = " + result);
+    return(ipman);
+}
+
+function add_vm_to_project(tp,theimagetype,thehostname)
+{
+         vm = {};
+         vm.name = thehostname;
+         vm.fqdn = thehostname + "." + tp.name + "." + base_domain;
+         ipman   = allocate_ip(vm.fqdn,tp.name);
+         vm.ip = ipman.ip;
+         vm.mac = ipman.mac;
+         vm.image = theimagetype;
+         vm.state = "init";
+         db.vm.save(vm);
+}
+
+
 function setup_hybrid2_project()
 {
 	projs=db.proj.find({state : "new"});
-        console.log("Setup: " + util.inspect(projs));
-        
-
+        if (projs.length == 0){
+           console.log("setup_hbrid2_project: No new project entries available");
+           exit();
+           }
+        proj = projs[0];
+        console.log("Setup: " + util.inspect(proj));
+        add_vm_to_project(proj,"rhel75","openshift");
+        add_vm_to_project(proj,"win1709", "winnode01");
+        proj.state = "init";
+        db.proj.update({_id : proj._id},proj);
 }
+
+function reset_projects()
+{
+     projs=db.proj.find();
+     for (idx = 0;idx < projs.length;idx++){
+        projs[idx].state = "unassigned";
+        db.proj.update({_id : projs[idx]._id},projs[idx]);
+        }
+}
+
 
 add_ip_range('10.19.114.58','10.19.114.86');
 projs = db.proj.find();
@@ -80,5 +129,10 @@ if (projs.length < 5){
        }
    }
 
-setup_hybrid2_project();
+vms = db.vm.find();
+if (vms.length < 1){
+   for(idx = 0;idx < 5;idx++){
+   setup_hybrid2_project();
+   }
+ }
 

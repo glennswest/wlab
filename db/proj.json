@@ -1,6 +1,1 @@
-[{"name":"blue","state":"new","ownwer":"","hosts":[],"_id":"41b068910cfc4227a48f8748d78fcac7"},
- {"name":"green","state":"new","ownwer":"","hosts":[],"_id":"68f3fd4d9deb467f80699d2104520071"},
- {"name":"red","state":"new","ownwer":"","hosts":[],"_id":"af40d7965475437a89e5f4fd4ff9b49a"},
- {"name":"star","state":"new","ownwer":"","hosts":[],"_id":"ed78ea65394e41a79053d480c44672b2"},
- {"name":"light","state":"new","ownwer":"","hosts":[],"_id":"ed78ea66394e41a7905bd480c44672b7"},
- {"name":"bright","state":"new","ownwer":"","hosts":[],"_id":"6700abc82d8c4056a27b29c64d888248"}]
+[{"name":"blue","state":"init","ownwer":"","hosts":[],"_id":"41b068910cfc4227a48f8748d78fcac7"},{"name":"green","state":"init","ownwer":"","hosts":[],"_id":"68f3fd4d9deb467f80699d2104520071"},{"name":"red","state":"init","ownwer":"","hosts":[],"_id":"af40d7965475437a89e5f4fd4ff9b49a"},{"name":"star","state":"init","ownwer":"","hosts":[],"_id":"ed78ea65394e41a79053d480c44672b2"},{"name":"light","state":"init","ownwer":"","hosts":[],"_id":"ed78ea66394e41a7905bd480c44672b7"},{"name":"bright","state":"new","ownwer":"","hosts":[],"_id":"6700abc82d8c4056a27b29c64d888248"}]

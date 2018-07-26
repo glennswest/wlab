@@ -19,4 +19,16 @@ function reset_projects()
         }
 }
 
+function reset_ipman()
+{
+     ipmans = db.ipman.find();
+     for (idx = 0;idx < ipmans.length;idx++){
+         ipmans[idx].state = "unassigned";
+         ipmans[idx].fqdn  = "";
+         ipmans[idx].project = "";
+         db.ipman.update({_id : ipmans[idx]._id}, ipmans[idx]);
+         }
+}
+
 reset_projects();
+reset_ipman();

@@ -110,6 +110,27 @@ function setup_hybrid2_project()
         db.proj.update({_id : proj._id},proj);
 }
 
+function setup_hybrid6_project()
+{
+        projs=db.proj.find({state : "new"});
+        if (projs.length == 0){
+           console.log("setup_hbrid2_project: No new project entries available");
+           exit();
+           }
+        proj = projs[0];
+        console.log("Setup: " + util.inspect(proj));
+        add_vm_to_project(proj,"rhel75","bastion");
+        add_vm_to_project(proj,"rhel75","master");
+        add_vm_to_project(proj,"rhel75","node01");
+        add_vm_to_project(proj,"rhel75","node02");
+        add_vm_to_project(proj,"win1709", "winnode01");
+        add_vm_to_project(proj,"win1709", "winnode02");
+        proj.state = "init";
+        db.proj.update({_id : proj._id},proj);
+
+
+}
+
 function reset_projects()
 {
      projs=db.proj.find();
@@ -134,5 +155,6 @@ if (vms.length < 1){
    for(idx = 0;idx < 5;idx++){
    setup_hybrid2_project();
    }
+ setup_hybrid6_project();
  }
 

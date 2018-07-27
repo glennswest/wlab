@@ -11,5 +11,10 @@
     "openshift"
   ],
   "author": "Glenn West",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "diskdb": "^0.1.17",
+    "ip": "^1.1.5",
+    "moniker": "^0.1.2"
+  }
 }

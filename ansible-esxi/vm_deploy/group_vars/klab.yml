@@ -1,0 +1,14 @@
+ansible_dns.domain: "blue.k.e2e.bos.redhat.com"
+dns_domain: "blue.k.e2e.bos.redhat.com"
+
+name_servers:
+    - 10.0.128.1
+    - 10.0.128.2
+
+ntp_servers:
+    - 10.1.131.1
+    - 10.1.131.2
+
+  # defaults: "log." + dns_domain
+  # syslog_host: log.m0.maxidom.ru
+

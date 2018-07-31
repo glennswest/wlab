@@ -15,6 +15,8 @@
   "dependencies": {
     "diskdb": "^0.1.17",
     "ip": "^1.1.5",
-    "moniker": "^0.1.2"
+    "moniker": "^0.1.2",
+    "simple-ssh": "^1.0.0",
+    "ssh2-promise": "0.0.9"
   }
 }

@@ -53,6 +53,17 @@ var idx;
 
 }
 
+function create_named_project(thename)
+{
+   proj = {};
+
+   proj.name = thename;
+   proj.state = "unassigned";
+   proj.ownwer = "";
+   proj.hosts = [];
+   db.proj.save(proj);
+}
+
 function create_project()
 {
    proj = {};
@@ -139,6 +150,11 @@ function reset_projects()
         db.proj.update({_id : projs[idx]._id},projs[idx]);
         }
 }
+
+create_named_project("ctl");
+add_vm_to_project("ctl","rhel75","ctl");
+
+exit();
 
 
 add_ip_range('10.19.114.58','10.19.114.86');

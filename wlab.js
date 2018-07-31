@@ -6,6 +6,8 @@ var Moniker = require('moniker');
 var names = Moniker.generator([Moniker.noun]);
 var base_domain = "k.e2e.bos.redhat.com"
 const exec = util.promisify(require('child_process').exec);
+var SSH2Promise = require('ssh2-promise');
+
 
 argOffset = 2;
 
@@ -14,17 +16,43 @@ if (process.argv.length < 3){
    process.exit();
    }
 
+async function execute_esxi(cmd)
+{
+	ssh_cmd = "ssh -T root@gwvcenter <<'EOF'\n" + cmd + "\nEOF\n";
+        await execute(ssh_cmd);
+}
+
+
 async function execute(cmd)
 {
   const { stdout, stderr } = await exec(cmd);
   console.log('stdout:', stdout);
   console.log('stderr:', stderr);
+  return(stdout);
+}
+
+
+async function list_raw_vms()
+{
+	await execute_esxi('vim-cmd vmsvc/getallvms;exit');
+        console.log("Back to list");
+
+}
+
+
+
+async function delete_raw_vm(vmname)
+{
+        cmd = 'vmid=`vim-cmd vmsvc/getallvms | grep "' + vmname + '"' + " | cut -d ' ' -f 1`;vim-cmd vmsvc/power.off $vmid;vim-cmd vmsvc/destroy $vmid";
+        console.log(cmd);
+	await execute_esxi(cmd);
+
 }
 
 function create_vm(thename,theip,themac,theimage)
 {
 
-        cmd = "cd ansible-esxi/vm_deploy;ansible-playbook clone_local.yaml -l klab -e 'dst_ip_addr=\"" + theip + "\"' -e 'dst_vm_addr=\"" + themac + "\"' -e 'dst_vm_name=\"" + thename + "\"'" + " -e 'src_vm_name=\"" + theimage + "\"'";
+        cmd = "cd ansible-esxi/vm_deploy;ansible-playbook clone_local.yaml -l klab -e 'dst_ip_addr=\"" + theip + "\"' -e 'dst_vm_addr=\"" + themac + "\"' -e 'dst_vm_name=\"" + thename + "\"'" + " -e 'src_vm_name=\"" + theimage + "\"'" + " -e 'do_power_on=true'";
         execute(cmd);
         console.log ("Cmd = " + cmd);
 }
@@ -38,12 +66,78 @@ function list_projects()
    return;
 }
      
-cmd = process.argv[argOffset];
-switch(cmd){
-
+async function delete_project(pname)
+{
+   proj=db.proj.findOne({name : pname});
+   console.log(proj);
+   if (proj == undefined){
+      console.log("Cannot find project: " + pname);
+      return(-1);
+      }
+   vms=db.vm.find({project : pname});
+   if (vms.length == 0){
+      console.log("No vms for project");
+      return(-2);
+      }
+   for(idx = 0;idx < vms.length;idx++){
+      vm = vms[idx];
+      await delete_raw_vm(vm.fqdn);
+      vm.state = "init";
+      db.vm.update({_id : vm._id},vm);
+      }
 }
 
-// [{"name":"openshift","fqdn":"openshift.blue.k.e2e.bos.redhat.com","ip":"10.19.114.58","mac":"00:50:56:1f:58:58","image":"rhel75","state":"init","_id":"93df3e6409af4a1082791083a972c40b"}
+function create_one_vm(pname,vname)
+{
+   proj=db.proj.findOne({name : pname});
+   console.log(proj);
+   if (proj == undefined){
+      console.log("Cannot find project: " + pname);
+      return(-1);
+      }
+   vms=db.vm.find({project : pname});
+   if (vms.length == 0){
+      console.log("No vms for project");
+      return(-2);
+      }
+   console.log("Looking");
+   for(idx = 0;idx < vms.length;idx++){
+      vm = vms[idx];
+      console.log(vm.name);
+      if (vm.name.localeCompare(vname) == 0){
+         create_vm(vm.fqdn,vm.ip,vm.mac,vm.image);
+         vm.state = "created";
+         db.vm.update({_id : vm._id},vm);
+         }
+      }
+}
+
+async function recreate_one_vm(pname,vname)
+{
+   proj=db.proj.findOne({name : pname});
+   console.log(proj);
+   if (proj == undefined){
+      console.log("Cannot find project: " + pname);
+      return(-1);
+      }
+   vms=db.vm.find({project : pname});
+   if (vms.length == 0){
+      console.log("No vms for project");
+      return(-2);
+      }
+   console.log("Looking");
+   for(idx = 0;idx < vms.length;idx++){
+      vm = vms[idx];
+      console.log(vm.name);
+      if (vm.name.localeCompare(vname) == 0){
+         await delete_raw_vm(vm.fqdn);
+         create_vm(vm.fqdn,vm.ip,vm.mac,vm.image);
+         vm.state = "created";
+         db.vm.update({_id : vm._id},vm);
+         }
+      }
+}
+
 function create_project(pname)
 {
    proj=db.proj.findOne({name : pname});
@@ -78,6 +172,9 @@ function fix_vm_project()
      
 cmd = process.argv[argOffset];
 switch(cmd){
+     case "list-raw-vms":
+           list_raw_vms();
+           break;
      case "fix-vm":
            fix_vm_project();
            process.exit();
@@ -93,6 +190,32 @@ switch(cmd){
               }
            project_name = process.argv[argOffset+1];
            create_project(project_name);
+           break;
+     case "recreate-onevm":
+           if (process.argv.length < 5){
+              console.log("node wlab.js recreate-one-vm nameofproject vmname");
+              process.exit();
+              }
+           project_name = process.argv[argOffset+1];
+           vm_name = process.argv[argOffset+2];
+           recreate_one_vm(project_name,vm_name);
+           break;
+     case "create-onevm":
+           if (process.argv.length < 5){
+              console.log("node wlab.js create-one-vm nameofproject vmname");
+              process.exit();
+              }
+           project_name = process.argv[argOffset+1];
+           vm_name = process.argv[argOffset+2];
+           create_one_vm(project_name,vm_name);
+           break;
+     case "delete-project":
+           if (process.argv.length < 4){
+              console.log("node wlab.js delete-project nameofproject");
+              process.exit();
+              }
+           project_name = process.argv[argOffset+1];
+           delete_project(project_name);
            break;
      case "help":
            console.log("Commands: help, create-project\n");

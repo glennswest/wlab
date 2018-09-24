@@ -1,3 +1,4 @@
+
 var db = require('diskdb');
 db = db.connect('./db',['ipman','setting','proj','vm']);
 var ip = require('ip');
@@ -11,10 +12,7 @@ var SSH2Promise = require('ssh2-promise');
 
 argOffset = 2;
 
-if (process.argv.length < 3){
-   console.log("node wlab.js cmd value1 value 2\n");
-   process.exit();
-   }
+
 
 async function execute_esxi(cmd)
 {
@@ -157,7 +155,7 @@ function create_project(pname)
       vm.state = "created";
       db.vm.update({_id : vm._id},vm);
       }
-
+   return(0);
 }
 
 function fix_vm_project()
@@ -169,64 +167,8 @@ function fix_vm_project()
         db.vm.update({_id : vms[idx]._id},vms[idx]);
         }
 }
-     
-cmd = process.argv[argOffset];
-switch(cmd){
-     case "list-raw-vms":
-           list_raw_vms();
-           break;
-     case "fix-vm":
-           fix_vm_project();
-           process.exit();
-           break;
-     case "list":
-          list_projects();
-          process.exit();
-          break;
-     case "create-project":
-           if (process.argv.length < 4){
-              console.log("node wlab.js create-project nameofproject");
-              process.exit();
-              }
-           project_name = process.argv[argOffset+1];
-           create_project(project_name);
-           break;
-     case "recreate-onevm":
-           if (process.argv.length < 5){
-              console.log("node wlab.js recreate-one-vm nameofproject vmname");
-              process.exit();
-              }
-           project_name = process.argv[argOffset+1];
-           vm_name = process.argv[argOffset+2];
-           recreate_one_vm(project_name,vm_name);
-           break;
-     case "create-onevm":
-           if (process.argv.length < 5){
-              console.log("node wlab.js create-one-vm nameofproject vmname");
-              process.exit();
-              }
-           project_name = process.argv[argOffset+1];
-           vm_name = process.argv[argOffset+2];
-           create_one_vm(project_name,vm_name);
-           break;
-     case "delete-project":
-           if (process.argv.length < 4){
-              console.log("node wlab.js delete-project nameofproject");
-              process.exit();
-              }
-           project_name = process.argv[argOffset+1];
-           delete_project(project_name);
-           break;
-     case "help":
-           console.log("Commands: help, create-project\n");
-           process.exit();
-           break;
-           }
 
-//var Ansible = require('node-ansible');
-//var command = new Ansible.AdHoc().module('shell').hosts('local').args("echo 'hello'");
-//command.exec();
 
-//#var playbook = new Ansible.Playbook().playbook('my-playbook');
-//#playbook.exec();
+exports.create_proj = function(thename){ create_project(thename); };
+exports.delete_proj = function(thename){ delete_project(thename); };
 

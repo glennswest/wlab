@@ -36,12 +36,14 @@ async function delete_project(req,res, next)
 }
 
 var server = restify.createServer();
-server.get('/wlab/create/:code', create_project);
-server.head('/wlab/create/:code', create_project);
-server.get('/wlab/delete/:code', delete_project);
-server.head('/wlab/delete/:code', delete_project);
+server.get('/', respond);
+server.head('/',respond);
+server.get('/create/:code', create_project);
+server.head('/create/:code', create_project);
+server.get('/delete/:code', delete_project);
+server.head('/delete/:code', delete_project);
 
-server.listen(80, function() {
+server.listen(8085, function() {
   console.log('%s listening at %s', server.name, server.url);
 });
 

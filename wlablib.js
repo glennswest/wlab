@@ -1,7 +1,7 @@
 
 var pp = require('pretty-print');
 var db = require('diskdb');
-db = db.connect('./db',['ipman','setting','proj','vm','assign']);
+db = db.connect('/data',['ipman','setting','proj','vm','assign']);
 var ip = require('ip');
 var util = require('util');
 var Moniker = require('moniker');
@@ -18,7 +18,7 @@ argOffset = 2;
 
 async function execute_esxi(cmd)
 {
-	ssh_cmd = "ssh -T root@gwvcenter <<'EOF'\n" + cmd + "\nEOF\n";
+	ssh_cmd = "ssh -T root@gwvcenter.e2e.bos.redhat.com <<'EOF'\n" + cmd + "\nEOF\n";
         await execute(ssh_cmd);
 }
 
@@ -111,14 +111,14 @@ async function delete_project(pname)
       console.log("No vms for project");
       return(-2);
       }
+   proj.state = "init"
+   db.proj.update({_id : proj._id},proj);
    for(idx = 0;idx < vms.length;idx++){
       vm = vms[idx];
       await delete_raw_vm(vm.fqdn);
       vm.state = "init";
       db.vm.update({_id : vm._id},vm);
       }
-   proj.state = "init"
-   db.proj.update({_id : proj._id},proj);
 
 }
 

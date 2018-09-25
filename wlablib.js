@@ -1,6 +1,7 @@
 
+var pp = require('pretty-print');
 var db = require('diskdb');
-db = db.connect('./db',['ipman','setting','proj','vm']);
+db = db.connect('./db',['ipman','setting','proj','vm','assign']);
 var ip = require('ip');
 var util = require('util');
 var Moniker = require('moniker');
@@ -8,6 +9,7 @@ var names = Moniker.generator([Moniker.noun]);
 var base_domain = "k.e2e.bos.redhat.com"
 const exec = util.promisify(require('child_process').exec);
 var SSH2Promise = require('ssh2-promise');
+var moment = require('moment');
 
 
 argOffset = 2;
@@ -47,11 +49,11 @@ async function delete_raw_vm(vmname)
 
 }
 
-function create_vm(thename,theip,themac,theimage)
+async function create_vm(thename,theip,themac,theimage)
 {
 
         cmd = "cd ansible-esxi/vm_deploy;ansible-playbook clone_local.yaml -l klab -e 'dst_ip_addr=\"" + theip + "\"' -e 'dst_vm_addr=\"" + themac + "\"' -e 'dst_vm_name=\"" + thename + "\"'" + " -e 'src_vm_name=\"" + theimage + "\"'" + " -e 'do_power_on=true'";
-        execute(cmd);
+        await execute(cmd);
         console.log ("Cmd = " + cmd);
 }
 
@@ -64,6 +66,38 @@ function list_projects()
    return;
 }
      
+function get_assignment(thecode)
+{
+       assignment = db.assign.findOne({code: thecode});
+       if (assignment == undefined){
+          console.log("Invalid Code: " + thecode);
+          return(undefined);
+          }
+       return(assignment);
+}
+
+
+function assign_project(thename,themail)
+{
+       proj = db.proj.findOne({name: thename});
+       if (proj == undefined){
+          console.log("Unknown Project - " + thename);
+          return("Error: Unknowd Project");
+          }
+       assign = db.assign.findOne({name: thename});
+       if (assign != undefined){
+          console.log("Project Assigned - " + assign.email);
+          return("Error: Project Already Assigned - Email: " + assign.email);
+          }
+       assign = {};
+       assign.name = thename;
+       assign.email = themail;
+       assign.code = Moniker.choose();
+       assign.expire = moment().add(7,'days');
+       db.assign.save(assign);
+       console.log("Code = " + assign.code);
+}
+
 async function delete_project(pname)
 {
    proj=db.proj.findOne({name : pname});
@@ -83,6 +117,9 @@ async function delete_project(pname)
       vm.state = "init";
       db.vm.update({_id : vm._id},vm);
       }
+   proj.state = "init"
+   db.proj.update({_id : proj._id},proj);
+
 }
 
 function create_one_vm(pname,vname)
@@ -136,7 +173,7 @@ async function recreate_one_vm(pname,vname)
       }
 }
 
-function create_project(pname)
+async function create_project(pname)
 {
    proj=db.proj.findOne({name : pname});
    console.log(proj);
@@ -144,17 +181,26 @@ function create_project(pname)
       console.log("Cannot find project: " + pname);
       return(-1);
       }
+   pp(proj);
+   if (proj.state == "created"){
+      console.log("Deleting Existing VM's");
+      await delete_project(pname);
+      console.log("Delete Complete");
+      }
    vms=db.vm.find({project : pname});
    if (vms.length == 0){
       console.log("No vms for project");
       return(-2);
       }
+   proj.state = "created"
+   db.proj.update({_id : proj._id},proj);
    for(idx = 0;idx < vms.length;idx++){
       vm = vms[idx];
-      create_vm(vm.fqdn,vm.ip,vm.mac,vm.image);
+      await create_vm(vm.fqdn,vm.ip,vm.mac,vm.image);
       vm.state = "created";
       db.vm.update({_id : vm._id},vm);
       }
+   console.log("Create Project Complete");
    return(0);
 }
 
@@ -168,7 +214,8 @@ function fix_vm_project()
         }
 }
 
-
-exports.create_proj = function(thename){ create_project(thename); };
-exports.delete_proj = function(thename){ delete_project(thename); };
+module.exports.create_proj = create_project;
+module.exports.delete_proj = delete_project;
+exports.assign_proj = function(the_name,the_email){ assign_project(the_name,the_email); };
+exports.get_assign  = function(the_code){ return get_assignment( the_code ); };
 

@@ -15,7 +15,10 @@
   "dependencies": {
     "diskdb": "^0.1.17",
     "ip": "^1.1.5",
+    "moment": "^2.22.2",
     "moniker": "^0.1.2",
+    "pretty-print": "^2.0.0",
+    "restify": "^7.2.1",
     "simple-ssh": "^1.0.0",
     "ssh2-promise": "0.0.9"
   }

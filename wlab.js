@@ -55,6 +55,17 @@ switch(cmd){
            project_name = process.argv[argOffset+1];
            wl.delete_proj(project_name);
            break;
+     case "assign-project":
+           if (process.argv.length < 5){
+              console.log("node wlab.js assign-project  nameofproject email");
+              process.exit();
+              }
+           project_name = process.argv[argOffset+1];
+           the_email = process.argv[argOffset+2];
+           console.log(the_email);
+           console.log(project_name);
+           wl.assign_proj(project_name,the_email);
+           break;
      case "help":
            console.log("Commands: help, create-project\n");
            process.exit();

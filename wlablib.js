@@ -45,7 +45,7 @@ async function delete_raw_vm(vmname)
 {
         cmd = 'vmid=`vim-cmd vmsvc/getallvms | grep "' + vmname + '"' + " | cut -d ' ' -f 1`;vim-cmd vmsvc/power.off $vmid;vim-cmd vmsvc/destroy $vmid";
         console.log(cmd);
-	await execute_esxi(cmd);
+	await execute_esxi(cmd).catch((err) => { console.log(err); });;
 
 }
 

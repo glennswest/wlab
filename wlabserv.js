@@ -35,6 +35,17 @@ async function delete_project(req,res, next)
 
 }
 
+async function assign_project(req,res, next)
+{
+	the_project = req.params.project;
+        the_email   = req.params.email;
+        assign = wl.assign_proj(the_project,the_email);
+        pp(assign);
+        res.send('Assign Project: ' + assign);
+        next();
+
+}
+
 var server = restify.createServer();
 server.get('/', respond);
 server.head('/',respond);
@@ -42,6 +53,8 @@ server.get('/create/:code', create_project);
 server.head('/create/:code', create_project);
 server.get('/delete/:code', delete_project);
 server.head('/delete/:code', delete_project);
+server.get('/assign/:project/:email', assign_project);
+server.head('/assign/:project/:email', assign_project);
 
 server.listen(8085, function() {
   console.log('%s listening at %s', server.name, server.url);

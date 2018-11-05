@@ -47,6 +47,7 @@ async function assign_project(req,res, next)
 }
 
 var server = restify.createServer();
+server.server.setTimeout(60000*50000);
 server.get('/', respond);
 server.head('/',respond);
 server.get('/create/:code', create_project);

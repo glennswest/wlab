@@ -1,5 +1,6 @@
 var db = require('diskdb');
-db = db.connect('./db',['ipman','setting','proj','vm']);
+//db = db.connect('./db',['ipman','setting','proj','vm']);
+db = db.connect('/data/wlab.app.ctl.k.e2e.bos.redhat.com',['ipman','setting','proj','vm']);
 var ip = require('ip');
 var util = require('util');
 var Moniker = require('moniker');
@@ -151,26 +152,14 @@ function reset_projects()
         }
 }
 
-create_named_project("ctl");
-add_vm_to_project("ctl","rhel75","ctl");
+//create_named_project("ctl");
+//add_vm_to_project("ctl","rhel75","ctl");
 
-exit();
+        var projs=db.proj.find({name : "bright"});
+        proj = projs[0];
+        add_vm_to_project(proj,"rhel75","node03");
+        add_vm_to_project(proj,"rhel75","node04");
+        add_vm_to_project(proj,"win1803", "winnode03");
+        add_vm_to_project(proj,"win1803", "winnode04");
 
-
-add_ip_range('10.19.114.58','10.19.114.86');
-projs = db.proj.find();
-if (projs.length < 5){
-   console.log("Creating Projects");
-   for(idx = 0;idx < 5;idx++){
-       pc = create_project();
-       }
-   }
-
-vms = db.vm.find();
-if (vms.length < 1){
-   for(idx = 0;idx < 5;idx++){
-   setup_hybrid2_project();
-   }
- setup_hybrid6_project();
- }
 

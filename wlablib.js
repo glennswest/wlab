@@ -206,16 +206,24 @@ async function create_project(pname)
 
 function fix_vm_project()
 {
-     vms=db.vm.find();
-     for (idx = 0;idx < vms.length;idx++){
-        vms[idx].project = vms[idx].fqdn.split(".")[1];
-        console.log("Project = " + vms[idx].project);
-        db.vm.update({_id : vms[idx]._id},vms[idx]);
-        }
+     console.log("Fix VM Project");
+     projs = db.proj.find();
+     console.log("Projects = " + projs.length);
+     for (idx = 0;idx < projs.length;idx++){
+         proj = projs[idx];
+         console.log("Project = " + proj.name);
+         }
+     //vms=db.vm.find();
+     //for (idx = 0;idx < vms.length;idx++){
+     //   vms[idx].project = vms[idx].fqdn.split(".")[1];
+     //   console.log("Project = " + vms[idx].project);
+     //   db.vm.update({_id : vms[idx]._id},vms[idx]);
+     //   }
 }
 
 module.exports.create_proj = create_project;
 module.exports.delete_proj = delete_project;
+module.exports.fix_vm_project = fix_vm_project;
 exports.assign_proj = function(the_name,the_email){ assign_project(the_name,the_email); };
 exports.get_assign  = function(the_code){ return get_assignment( the_code ); };
 

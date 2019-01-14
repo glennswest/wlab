@@ -14,7 +14,7 @@ switch(cmd){
            wl.list_raw_vms();
            break;
      case "fix-vm":
-           fix_vm_project();
+           wl.fix_vm_project();
            process.exit();
            break;
      case "list":

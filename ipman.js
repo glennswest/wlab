@@ -155,11 +155,23 @@ function reset_projects()
 //create_named_project("ctl");
 //add_vm_to_project("ctl","rhel75","ctl");
 
-        var projs=db.proj.find({name : "bright"});
-        proj = projs[0];
-        add_vm_to_project(proj,"rhel75","node03");
-        add_vm_to_project(proj,"rhel75","node04");
-        add_vm_to_project(proj,"win1803", "winnode03");
-        add_vm_to_project(proj,"win1803", "winnode04");
+        //var projs=db.proj.find({name : "bright"});
+        //proj = projs[0];
+        //add_vm_to_project(proj,"rhel75","node03");
+        //add_vm_to_project(proj,"rhel75","node04");
+        //add_vm_to_project(proj,"win1803", "winnode03");
+        //add_vm_to_project(proj,"win1803", "winnode04");
+
+
+     projs = db.proj.find();
+     console.log("Projects = " + projs.length);
+     for (idx = 0;idx < projs.length;idx++){
+         proj = projs[idx];
+         console.log("Project = " + proj.name);
+         if (proj.name != "ctl"){
+            add_vm_to_project(proj,"rhel75","bts");
+            console.log("Adding bts node");
+            }
+         }
 
 

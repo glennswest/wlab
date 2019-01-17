@@ -2,6 +2,10 @@
 var pp = require('pretty-print');
 var db = require('diskdb');
 db = db.connect('/data',['ipman','setting','proj','vm','assign']);
+if (db == undefined){
+   console.log("Using /data/wlab.app.ctl.k.e2e.bos.redhat.com");
+   db = db.connect('/data/wlab.app.ctl.k.e2e.bos.redhat.com/',['ipman','setting','proj','vm','assign']);
+   }
 var ip = require('ip');
 var util = require('util');
 var Moniker = require('moniker');
@@ -206,24 +210,18 @@ async function create_project(pname)
 
 function fix_vm_project()
 {
-     console.log("Fix VM Project");
-     projs = db.proj.find();
-     console.log("Projects = " + projs.length);
-     for (idx = 0;idx < projs.length;idx++){
-         proj = projs[idx];
-         console.log("Project = " + proj.name);
-         }
-     //vms=db.vm.find();
-     //for (idx = 0;idx < vms.length;idx++){
-     //   vms[idx].project = vms[idx].fqdn.split(".")[1];
-     //   console.log("Project = " + vms[idx].project);
-     //   db.vm.update({_id : vms[idx]._id},vms[idx]);
-     //   }
+     vms=db.vm.find();
+     for (idx = 0;idx < vms.length;idx++){
+        vms[idx].project = vms[idx].fqdn.split(".")[1];
+        console.log("Project = " + vms[idx].project);
+        db.vm.update({_id : vms[idx]._id},vms[idx]);
+        }
 }
 
 module.exports.create_proj = create_project;
 module.exports.delete_proj = delete_project;
 module.exports.fix_vm_project = fix_vm_project;
+module.exports.recreate_one_vm = recreate_one_vm;
 exports.assign_proj = function(the_name,the_email){ assign_project(the_name,the_email); };
 exports.get_assign  = function(the_code){ return get_assignment( the_code ); };
 

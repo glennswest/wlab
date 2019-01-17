@@ -1,6 +1,6 @@
 var db = require('diskdb');
 //db = db.connect('./db',['ipman','setting','proj','vm']);
-db = db.connect('/data/wlab.app.ctl.k.e2e.bos.redhat.com',['ipman','setting','proj','vm']);
+db = db.connect('/data/wlab.app.ctl.k.e2e.bos.redhat.com',['ipman','setting','proj','vm','ipmap','srv']);
 var ip = require('ip');
 var util = require('util');
 var Moniker = require('moniker');
@@ -103,6 +103,7 @@ function add_vm_to_project(tp,theimagetype,thehostname)
          vm.mac = ipman.mac;
          vm.image = theimagetype;
          vm.state = "init";
+         vm.project = vm.fqdn.split(".")[1];
          db.vm.save(vm);
 }
 
@@ -152,26 +153,103 @@ function reset_projects()
         }
 }
 
-//create_named_project("ctl");
-//add_vm_to_project("ctl","rhel75","ctl");
+function build_ipmap()
+{
+/*
+<clustername>-api.<baseDomain> # ex: mycluster-api.example.com
+<clustername>-master-0.<baseDomain> # ex: mycluster-master-0.example.com
+<clustername>-etcd-0.<baseDomain> # ex: mycluster-etcd-0.example.com
+<clustername>-bootstrap.<baseDomain> # ex: mycluster-bootstrap.example.com
+green-etcd-0.green.k.e2e.bos.redhat.com
+*/
 
-        //var projs=db.proj.find({name : "bright"});
-        //proj = projs[0];
-        //add_vm_to_project(proj,"rhel75","node03");
-        //add_vm_to_project(proj,"rhel75","node04");
-        //add_vm_to_project(proj,"win1803", "winnode03");
-        //add_vm_to_project(proj,"win1803", "winnode04");
-
-
-     projs = db.proj.find();
-     console.log("Projects = " + projs.length);
+     projs=db.proj.find();
      for (idx = 0;idx < projs.length;idx++){
          proj = projs[idx];
-         console.log("Project = " + proj.name);
-         if (proj.name != "ctl"){
-            add_vm_to_project(proj,"rhel75","bts");
-            console.log("Adding bts node");
+         master_name = "openshift." + proj.name + "." + base_domain;
+         vms  = db.vm.find({fqdn : master_name});
+         master_node  = vms[0];
+        
+         if (master_node == undefined) { //
+            master_name = "master."  + proj.name + "." + base_domain;
+            vms  = db.vm.find({fqdn : master_name});
+            master_node  = vms[0];
+            }
+         if (master_node !== undefined) { 
+            console.log("Master name = " + master_name);
+            console.log("Master ip = " + master_node.ip);
+            map = {};
+            map.project = proj.name;
+            map.name    = proj.name + "-api." + proj.name + "." + base_domain;
+            map.ip      = master_node.ip;
+            db.ipmap.save(map);
+
+            map = {};
+            map.project = proj.name;
+            map.name    = proj.name + "-master-0." + proj.name + "." + base_domain;
+            map.ip      = master_node.ip;
+            db.ipmap.save(map);
+
+            map = {};
+            map.project = proj.name;
+            map.name    = proj.name + "-etcd-0." + proj.name + "." + base_domain;
+            map.ip      = master_node.ip;
+            db.ipmap.save(map);
+ 
+            bts_name = "bts." + proj.name + "." + base_domain;
+            vms  = db.vm.find({fqdn : bts_name});
+            bts_node  = vms[0];
+            map = {};
+            map.project = proj.name;
+            map.name    = proj.name + "-bootstrap." + proj.name + "." + base_domain;
+            map.ip      = bts_node.ip;
+            db.ipmap.save(map);
             }
          }
 
+}
+
+function build_srv()
+{
+/*
+SRV _etcd-client-ssl._tcp.<clustername>.<baseDomain> '1 1 2379 <clustername>-etcd-0.<baseDomain>'
+SRV _etcd-server-ssl._tcp.<clustername>.<baseDomain> '1 1 2380 <clustername>-etcd-0.<baseDomain>'
+...
+SRV _etcd-client-ssl._tcp.<clustername>.<baseDomain> '1 1 2379 <clustername>-etcd-<N-1>.<baseDomain>'
+SRV _etcd-server-ssl._tcp.<clustername>.<baseDomain> '1 1 2380 <clustername>-etcd-<N-1>.<baseDomain>'
+
+green-etcd-0.green.k.e2e.bos.redhat.com
+# ex: _etcd-client-ssl._tcp.green.green.k.e2e.bos.redhat.com '1 1 2379 green-etcd-0.green.k.e2e.bos.redhat.com'
+*/
+     projs=db.proj.find();
+     for (idx = 0;idx < projs.length;idx++){
+         proj = projs[idx];
+         master_name = "openshift." + proj.name + "." + base_domain;
+         vms  = db.vm.find({fqdn : master_name});
+         master_node  = vms[0];
+
+         if (master_node == undefined) { //
+            master_name = "master."  + proj.name + "." + base_domain;
+            vms  = db.vm.find({fqdn : master_name});
+            master_node  = vms[0];
+            }
+         if (master_node !== undefined) {
+            console.log("Master name = " + master_name);
+            console.log("Master ip = " + master_node.ip);
+            srv = {};
+            srv.project = proj.name;
+            srv.name    = "_etcd-client-ssl._tcp." + proj.name + "." + proj.name + "." + base_domain;
+            srv.map     = "1 1 2379 " + proj.name + "-etcd-0." + proj.name + "." + base_domain;
+            db.srv.save(srv);
+
+            srv = {};
+            srv.project = proj.name;
+            srv.name    = "_etcd-server-ssl._tcp." + proj.name + "." + proj.name + "." + base_domain;
+            srv.map     = "1 1 2380 " + proj.name + "-etcd-0." + proj.name + "." + base_domain;
+            db.srv.save(srv);
+            }
+         }
+}
+
+build_srv();
 

@@ -1,10 +1,10 @@
 
 var pp = require('pretty-print');
 var db = require('diskdb');
-db = db.connect('/data',['ipman','setting','proj','vm','assign']);
+var db = db.connect('/data/wlab.app.ctl.k.e2e.bos.redhat.com/',['ipman','setting','proj','vm','assign']);
 if (db == undefined){
-   console.log("Using /data/wlab.app.ctl.k.e2e.bos.redhat.com");
-   db = db.connect('/data/wlab.app.ctl.k.e2e.bos.redhat.com/',['ipman','setting','proj','vm','assign']);
+   console.log("Using /data");
+   db = db.connect('/data',['ipman','setting','proj','vm','assign']);
    }
 var ip = require('ip');
 var util = require('util');
